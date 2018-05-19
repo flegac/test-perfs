@@ -13,7 +13,7 @@ public class Repository1 implements MyRepository {
 
   @Override
   public Stream<MyEntity> all() {
-    return entities.keySet().stream().map(entities::get);
+    return entities.values().stream();
   }
 
   @Override

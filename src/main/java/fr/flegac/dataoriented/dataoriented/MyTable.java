@@ -1,10 +1,10 @@
 package fr.flegac.dataoriented.dataoriented;
 
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Stream;
 import fr.flegac.dataoriented.api.MyComponent;
 
 public class MyTable<COMPONENT extends MyComponent> {
@@ -16,8 +16,8 @@ public class MyTable<COMPONENT extends MyComponent> {
     this.type = type;
   }
 
-  public Collection<COMPONENT> all() {
-    return items.values();
+  public Stream<COMPONENT> all() {
+    return items.values().stream();
   }
 
   public void delete(final long id) {

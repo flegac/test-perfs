@@ -1,10 +1,10 @@
 package fr.flegac.dataoriented.dataoriented;
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import fr.flegac.dataoriented.api.MyComponent;
 import fr.flegac.dataoriented.api.MyEntity;
@@ -16,15 +16,13 @@ public class Repository2 implements MyRepository {
 
   @Override
   public Stream<MyEntity> all() {
-    final Set<Long> ids = new HashSet<>();
+    final Set<Long> ids = tables.values().stream()
+        .flatMap(MyTable::all)
+        .map(c -> c.id)
+        .collect(Collectors.toSet());
 
-    for (final MyTable<? extends MyComponent> table : tables.values()) {
-      table.all().stream()
-          .map(c -> c.id)
-          .map(ids::add);
-    }
-
-    return ids.stream().map(this::get)
+    return ids.stream()
+        .map(this::get)
         .filter(Optional::isPresent)
         .map(Optional::get);
   }
@@ -32,32 +30,27 @@ public class Repository2 implements MyRepository {
   @SuppressWarnings("unchecked")
   @Override
   public Stream<MyComponent> components(final Class type) {
-    return table(type).all().stream();
+    return table(type).all();
   }
 
   @Override
   public void delete(final long id) {
-    for (final MyTable<?> table : tables.values()) {
-      table.delete(id);
-    }
+    tables.values().forEach(table -> table.delete(id));
   }
 
   @Override
   public Optional<MyEntity> get(final long id) {
     final MyEntity entity = new MyEntity1(id);
-    boolean exist = false;
-    for (final MyTable<?> table : tables.values()) {
-      final Optional<?> component = table.get(id);
-      exist = exist || component.isPresent();
-      component.ifPresent(c -> {
-        entity.set((MyComponent) c);
-      });
-    }
-    if (!exist) {
-      return Optional.empty();
-    }
 
-    return Optional.of(entity);
+    tables.values().stream()
+        .map(table -> table.get(id))
+        .filter(Optional::isPresent)
+        .map(Optional::get)
+        .forEach(entity::set);
+
+    return entity.components().isEmpty()
+        ? Optional.empty()
+        : Optional.of(entity);
   }
 
   @SuppressWarnings("unchecked")
@@ -68,9 +61,9 @@ public class Repository2 implements MyRepository {
 
   @Override
   public void update(final MyEntity entity) {
-    for (final MyComponent c : entity.components()) {
-      table(c.getClass()).update(c);
-    }
+    entity.components().stream()
+        .forEach(c -> table(c.getClass()).update(c));
+
   }
 
   private void init(final Class<? extends MyComponent> type) {

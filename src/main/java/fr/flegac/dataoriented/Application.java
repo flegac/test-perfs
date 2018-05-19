@@ -1,5 +1,6 @@
 package fr.flegac.dataoriented;
 
+import static java.util.Arrays.stream;
 import fr.flegac.Util;
 import fr.flegac.dataoriented.api.MyComponent;
 import fr.flegac.dataoriented.api.MyRepository;
@@ -38,12 +39,12 @@ public class Application {
 
   private void update(final int updateIterations) {
     Util.eval("update", updateIterations, (i) -> {
-      for (final MySystem system : systems) {
-        repo.components(system.type())
+      stream(systems).forEach((final MySystem sys) -> {
+        repo.components(sys.type())
             .forEach(component -> {
-              system.update((MyComponent) component);
+              sys.update((MyComponent) component);
             });
-      }
+      });
     });
   }
 }
